@@ -1,4 +1,4 @@
-# Frequent Itemset Mining — CS-378 Semester Project
+# Frequent Itemset Mining 
 ### Algorithms: Apriori | Optimized Apriori | FP-Growth
 
 ---
@@ -143,7 +143,7 @@ python fpgrowth.py
 ```
 
 Compare the `Execution time` and `Peak memory` values across outputs
-to compute the speedup ratio for your report:
+to compute the speedup ratio:
 
 ```
 Speedup = Baseline time / Optimized time
