@@ -1,3 +1,14 @@
+"""
+Baseline Apriori Algorithm for Frequent Itemset Mining
+
+This module implements the classic Apriori algorithm for mining frequent itemsets
+from transactional data. It uses horizontal data format and generates candidates
+level by level, pruning using the Apriori property.
+
+The algorithm finds all itemsets that appear in at least min_sup fraction of
+transactions and returns performance metrics.
+"""
+
 import time
 import tracemalloc
 import math
@@ -9,6 +20,16 @@ from itertools import combinations
 # ─────────────────────────────────────────────
 
 def load_dataset(filepath: str) -> list[frozenset]:
+    """
+    Load transactions from a dataset file.
+
+    Args:
+        filepath (str): Path to the dataset file. Each line represents a transaction
+                       with space-separated integer item IDs.
+
+    Returns:
+        list[frozenset]: List of frozensets, where each frozenset represents a transaction.
+    """
     transactions = []
 
     try:
@@ -30,7 +51,16 @@ def load_dataset(filepath: str) -> list[frozenset]:
 # ─────────────────────────────────────────────
 
 def count_support(transactions, candidates):
+    """
+    Count the support (frequency) of candidate itemsets in the transactions.
 
+    Args:
+        transactions (list): List of frozensets representing transactions.
+        candidates (list): List of candidate itemsets to count support for.
+
+    Returns:
+        dict: Dictionary mapping each candidate itemset to its support count.
+    """
     support_count = {c: 0 for c in candidates}
 
     for transaction in transactions:
@@ -46,7 +76,16 @@ def count_support(transactions, candidates):
 # ─────────────────────────────────────────────
 
 def generate_candidates(frequent_itemsets, k):
+    """
+    Generate candidate itemsets of size k from frequent itemsets of size k-1.
 
+    Args:
+        frequent_itemsets (list): List of frequent itemsets of size k-1.
+        k (int): Size of candidate itemsets to generate.
+
+    Returns:
+        list: List of candidate itemsets of size k.
+    """
     candidates = set()
 
     itemsets = sorted([sorted(iset) for iset in frequent_itemsets])
@@ -73,7 +112,17 @@ def generate_candidates(frequent_itemsets, k):
 # ─────────────────────────────────────────────
 
 def prune_candidates(candidates, frequent_prev, k):
+    """
+    Prune candidate itemsets using the Apriori property.
 
+    Args:
+        candidates (list): List of candidate itemsets.
+        frequent_prev (set): Set of frequent itemsets of size k-1.
+        k (int): Size of candidate itemsets.
+
+    Returns:
+        list: List of pruned candidate itemsets where all subsets of size k-1 are frequent.
+    """
     pruned = []
 
     for candidate in candidates:
@@ -96,7 +145,20 @@ def prune_candidates(candidates, frequent_prev, k):
 def apriori(transactions,
             min_sup,
             max_k=4):
+    """
+    Run the baseline Apriori algorithm for frequent itemset mining.
 
+    This implementation uses horizontal data format and scans the entire dataset
+    for each level of candidates to count support.
+
+    Args:
+        transactions (list): List of frozensets representing transactions.
+        min_sup (float): Minimum support threshold (0.0 to 1.0).
+        max_k (int): Maximum size of itemsets to mine.
+
+    Returns:
+        dict: Results containing frequent itemsets, rules, and performance metrics.
+    """
     if not transactions:
         raise ValueError("Dataset is empty")
 
@@ -116,7 +178,7 @@ def apriori(transactions,
     candidates_per_level = {}
 
     # ─────────────────────────────
-    # LEVEL 1
+    # LEVEL 1: Generate and count single items
     # ─────────────────────────────
 
     all_items = set(item for t in transactions for item in t)
@@ -140,7 +202,7 @@ def apriori(transactions,
     k = 2
 
     # ─────────────────────────────
-    # MAIN LOOP
+    # MAIN LOOP: Generate candidates level by level
     # ─────────────────────────────
 
     while prev_frequent and k <= max_k:
@@ -224,22 +286,27 @@ def apriori(transactions,
 
 if __name__ == "__main__":
 
+    # Configuration parameters
     DATASET_PATH = "connect.dat"  # ← change to: chess.dat / accidents.dat
 
     MIN_SUP = 0.95   # ← change threshold (0.0 – 1.0)
 
     MAX_K = 4
 
+    # Load dataset
     transactions = load_dataset(DATASET_PATH)
 
+    # Run baseline Apriori algorithm
     result = apriori(
         transactions,
         min_sup=MIN_SUP,
         max_k=MAX_K
     )
 
+    # Extract metrics for display
     m = result["metrics"]
 
+    # Display results
     print(f"\n{'═'*55}")
     print("BASELINE APRIORI RESULTS")
     print(f"{'═'*55}")

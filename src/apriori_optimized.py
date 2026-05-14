@@ -1,3 +1,15 @@
+"""
+Optimized Apriori Algorithm for Frequent Itemset Mining
+
+This module implements an optimized version of the Apriori algorithm using:
+- Vertical data format (TID lists) for efficient support counting
+- Dataset partitioning to reduce memory usage
+- Early termination when too many candidates are generated
+
+The algorithm mines frequent itemsets from transactional data and returns
+performance metrics including execution time and memory usage.
+"""
+
 import time
 import tracemalloc
 import math
@@ -9,7 +21,16 @@ from itertools import combinations
 # ─────────────────────────────────────────────
 
 def load_dataset(filepath):
+    """
+    Load transactions from a dataset file.
 
+    Args:
+        filepath (str): Path to the dataset file. Each line represents a transaction
+                       with space-separated integer item IDs.
+
+    Returns:
+        list: List of frozensets, where each frozenset represents a transaction.
+    """
     transactions = []
 
     try:
@@ -34,7 +55,16 @@ def load_dataset(filepath):
 # ─────────────────────────────────────────────
 
 def build_tidlists(transactions):
+    """
+    Build TID (Transaction ID) lists for each item.
 
+    Args:
+        transactions (list): List of frozensets representing transactions.
+
+    Returns:
+        dict: Dictionary where keys are item IDs and values are sets of transaction IDs
+              containing that item.
+    """
     tidlists = {}
 
     for tid, transaction in enumerate(transactions):
@@ -54,7 +84,16 @@ def build_tidlists(transactions):
 # ─────────────────────────────────────────────
 
 def tidlist_support(tidlists, candidate):
+    """
+    Calculate the support count of a candidate itemset using TID list intersection.
 
+    Args:
+        tidlists (dict): TID lists for individual items.
+        candidate (frozenset): Candidate itemset.
+
+    Returns:
+        int: Support count (number of transactions containing all items in candidate).
+    """
     if not candidate:
         return 0
 
@@ -77,7 +116,16 @@ def tidlist_support(tidlists, candidate):
 # ─────────────────────────────────────────────
 
 def generate_candidates(frequent_itemsets, k):
+    """
+    Generate candidate itemsets of size k from frequent itemsets of size k-1.
 
+    Args:
+        frequent_itemsets (list): List of frequent itemsets of size k-1.
+        k (int): Size of candidate itemsets to generate.
+
+    Returns:
+        list: List of candidate itemsets of size k.
+    """
     candidates = set()
 
     itemsets = sorted([sorted(iset) for iset in frequent_itemsets])
@@ -108,7 +156,17 @@ def generate_candidates(frequent_itemsets, k):
 def prune_candidates(candidates,
                      frequent_prev,
                      k):
+    """
+    Prune candidate itemsets using the Apriori property.
 
+    Args:
+        candidates (list): List of candidate itemsets.
+        frequent_prev (set): Set of frequent itemsets of size k-1.
+        k (int): Size of candidate itemsets.
+
+    Returns:
+        list: List of pruned candidate itemsets where all subsets of size k-1 are frequent.
+    """
     pruned = []
 
     for candidate in candidates:
@@ -131,13 +189,22 @@ def prune_candidates(candidates,
 def mine_partition(partition,
                    local_min_count,
                    max_k):
+    """
+    Mine frequent itemsets from a single partition using optimized Apriori.
 
+    Args:
+        partition (list): List of transactions in this partition.
+        local_min_count (int): Minimum support count for this partition.
+        max_k (int): Maximum size of itemsets to mine.
+
+    Returns:
+        set: Set of frequent itemsets found in this partition.
+    """
     tidlists = build_tidlists(partition)
 
     local_frequent = {}
 
-    # LEVEL 1
-
+    # LEVEL 1: Find frequent single items
     l1 = {}
 
     for item, tids in tidlists.items():
@@ -203,7 +270,21 @@ def apriori_optimized(transactions,
                       min_sup,
                       n_partitions=2,
                       max_k=4):
+    """
+    Run the optimized Apriori algorithm with partitioning for frequent itemset mining.
 
+    This implementation uses vertical data format (TID lists) and partitions the dataset
+    to reduce memory usage and improve performance.
+
+    Args:
+        transactions (list): List of frozensets representing transactions.
+        min_sup (float): Minimum support threshold (0.0 to 1.0).
+        n_partitions (int): Number of partitions to divide the dataset into.
+        max_k (int): Maximum size of itemsets to mine.
+
+    Returns:
+        dict: Results containing frequent itemsets, rules, and performance metrics.
+    """
     if not transactions:
         raise ValueError("Dataset is empty")
 
@@ -316,6 +397,7 @@ def apriori_optimized(transactions,
 
 if __name__ == "__main__":
 
+    # Configuration parameters
     DATASET_PATH = "connect.dat"  # ← change to: chess.dat / accidents.dat
 
     MIN_SUP = 0.95   # ← change threshold (0.0 – 1.0)
@@ -324,8 +406,10 @@ if __name__ == "__main__":
 
     MAX_K = 4
 
+    # Load dataset
     transactions = load_dataset(DATASET_PATH)
 
+    # Run optimized Apriori algorithm
     result = apriori_optimized(
         transactions,
         min_sup=MIN_SUP,
@@ -333,8 +417,10 @@ if __name__ == "__main__":
         max_k=MAX_K
     )
 
+    # Extract metrics for display
     m = result["metrics"]
 
+    # Display results
     print(f"\n{'═'*60}")
     print("OPTIMIZED APRIORI RESULTS")
     print(f"{'═'*60}")
