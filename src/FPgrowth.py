@@ -55,24 +55,15 @@ class FPTree:
         current = self.root
         for item in transaction:
             if item in current.children:
-                # Node exists — increment it
                 current.children[item].increment(count)
-                # *** CRITICAL FIX ***
-                # Also update the header table's support counter.
-                # Without this, items that share prefixes (i.e. most
-                # items in a dense dataset) appear to have very low
-                # support in the header table, causing them to be
-                # incorrectly pruned during mining.
                 self.header_table[item][0] += count
             else:
-                # New node — create and register in header table
                 new_node = FPNode(item, count, current)
                 current.children[item] = new_node
                 if item not in self.header_table:
                     self.header_table[item] = [count, new_node]
                 else:
                     self.header_table[item][0] += count
-                    # Append to end of linked list for this item
                     tail = self.header_table[item][1]
                     while tail.node_link:
                         tail = tail.node_link
@@ -98,7 +89,6 @@ def build_fptree(transactions: list[list],
                  item_order: dict = None) -> tuple[FPTree, dict]:
     
     if item_order is None:
-        # Scan 1 — count 1-itemset support
         item_support = defaultdict(int)
         for transaction in transactions:
             for item in transaction:
@@ -107,7 +97,6 @@ def build_fptree(transactions: list[list],
                       for item, sup in item_support.items()
                       if sup >= min_count}
 
-    # Scan 2 — build FP-tree
     tree = FPTree()
     for transaction in transactions:
         filtered = sorted(
@@ -189,24 +178,20 @@ def mine_fptree(tree: FPTree, prefix: list,
         new_prefix  = prefix + [item]
         frequent_itemsets[frozenset(new_prefix)] = item_support
 
-        # --- Build conditional FP-tree ---
         cond_patterns = extract_conditional_pattern_base(item, tree)
         if not cond_patterns:
             continue
 
-        # Count item support within the conditional pattern base
         cond_support = defaultdict(int)
         for pattern, count in cond_patterns:
             for p_item in pattern:
                 cond_support[p_item] += count
 
-        # Keep only items frequent within the CPB
         cond_item_order = {i: s for i, s in cond_support.items()
                            if s >= min_count}
         if not cond_item_order:
             continue
 
-        # Build conditional FP-tree from filtered, sorted CPB
         cond_tree = FPTree()
         for pattern, count in cond_patterns:
             filtered = sorted(
@@ -266,15 +251,12 @@ def fpgrowth(transactions: list[list],
     tracemalloc.start()
     start_time = time.perf_counter()
 
-    # Scan 1 + Scan 2: build FP-tree
     tree, item_order = build_fptree(transactions, min_count)
 
-    # Collect frequent 1-itemsets
     frequent_itemsets = {}
     for item, sup in item_order.items():
         frequent_itemsets[frozenset([item])] = sup
 
-    # Mine FP-tree — zero candidate generation
     mine_fptree(tree, [], min_count, frequent_itemsets)
 
     elapsed     = time.perf_counter() - start_time

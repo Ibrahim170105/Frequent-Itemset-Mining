@@ -224,9 +224,9 @@ def apriori(transactions,
 
 if __name__ == "__main__":
 
-    DATASET_PATH = "connect.dat"
+    DATASET_PATH = "connect.dat"  # ← change to: chess.dat / accidents.dat
 
-    MIN_SUP = 0.95
+    MIN_SUP = 0.95   # ← change threshold (0.0 – 1.0)
 
     MAX_K = 4
 
